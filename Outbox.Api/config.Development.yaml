@@ -2,3 +2,10 @@ Logging:
   LogLevel:
     Default: Information
     Microsoft.AspNetCore: Warning
+    
+Database:
+  Host: localhost
+  Port: 5555
+  Database: outbox
+  Username: postgres
+  Password: postgres

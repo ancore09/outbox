@@ -2,6 +2,7 @@ namespace Outbox.Core.Options;
 
 public class DatabaseOptions
 {
+    public static string Section => nameof(DatabaseOptions);
     public required string Host { get; set; }
     public required string Database { get; set; }
     public required string Port { get; set; }

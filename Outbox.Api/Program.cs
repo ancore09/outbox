@@ -1,4 +1,6 @@
 using Outbox.Api.Services;
+using Outbox.Core;
+using Outbox.Infrastructure;
 using Outbox.Infrastructure.Database;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +14,8 @@ builder.Services.AddGrpc();
 builder.Services.AddGrpcReflection();
 
 builder.Services.AddDatabase(builder.Configuration);
+builder.Services.AddBackgroundWorkers();
+builder.Services.AddCore();
 
 var app = builder.Build();
 

@@ -1,5 +1,4 @@
 using Grpc.Core;
-using Outbox.Api;
 
 namespace Outbox.Api.Services;
 
