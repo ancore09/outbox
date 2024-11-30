@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Outbox.Core.Models;
 
@@ -8,18 +9,22 @@ public interface IWorkerTasksContainer : IDisposable
 {
     Task AddOrUpdateTask(WorkerTask config);
     Task CancelAndRemoveTask(string topic);
+    Task<List<WorkerTask>> GetWorkerTasks();
 }
 
 public class WorkerTasksContainer : IWorkerTasksContainer
 {
     private readonly ConcurrentDictionary<string, (WorkerTask Config, Task Task, CancellationTokenSource Cts)> _container = new();
-    private readonly ILogger<WorkerTasksContainer> _logger;
     private readonly SemaphoreSlim _semaphore = new(1, 1);
     private readonly CancellationTokenSource _globalCts = new();
 
-    public WorkerTasksContainer(ILogger<WorkerTasksContainer> logger)
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ILogger<WorkerTasksContainer> _logger;
+
+    public WorkerTasksContainer(ILogger<WorkerTasksContainer> logger, IServiceProvider serviceProvider)
     {
         _logger = logger;
+        _serviceProvider = serviceProvider;
     }
 
     public async Task AddOrUpdateTask(WorkerTask config)
@@ -39,9 +44,13 @@ public class WorkerTasksContainer : IWorkerTasksContainer
             {
                 try
                 {
+                    await using var scope = _serviceProvider.CreateAsyncScope();
+                    var service = scope.ServiceProvider.GetRequiredService<IOutboxSenderService>();
+                    
                     while (!cts.Token.IsCancellationRequested)
                     {
-                        await ProcessTask(config);
+                        //await ProcessTask(config);
+                        await service.SendMessages(config);
                         await Task.Delay(config.DelayMilliseconds, cts.Token);
                     }
                 }
@@ -65,7 +74,10 @@ public class WorkerTasksContainer : IWorkerTasksContainer
     
     private async Task ProcessTask(WorkerTask config)
     {
-        // Implementation of task processing logic
+        await using var scope = _serviceProvider.CreateAsyncScope();
+        var service = scope.ServiceProvider.GetRequiredService<IOutboxSenderService>();
+
+        await service.SendMessages(config);
     }
 
     public async Task CancelAndRemoveTask(string topic)
@@ -75,7 +87,12 @@ public class WorkerTasksContainer : IWorkerTasksContainer
             await existing.Cts.CancelAsync();
         }
     }
-    
+
+    public async Task<List<WorkerTask>> GetWorkerTasks()
+    {
+        return _container.Values.Select(x => x.Config).ToList();
+    }
+
     public void Dispose()
     {
         // _leaseCheckTimer.Dispose();

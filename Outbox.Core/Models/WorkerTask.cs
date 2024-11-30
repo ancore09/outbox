@@ -7,4 +7,9 @@ public class WorkerTask
     public DateTimeOffset? LeaseEnd { get; set; }
     public required int BatchSize { get; set; }
     public required int DelayMilliseconds { get; set; }
+
+    public bool IsLeaseExpired()
+    {
+        return LeaseEnd <= DateTimeOffset.UtcNow;
+    }
 }

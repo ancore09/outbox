@@ -3,9 +3,13 @@ Logging:
     Default: Information
     Microsoft.AspNetCore: Warning
     
-Database:
+DatabaseOptions:
   Host: localhost
   Port: 5555
   Database: outbox
   Username: postgres
   Password: postgres
+  
+SenderOptions:
+  Server: "localhost:9092"
+  ClientId: outbox

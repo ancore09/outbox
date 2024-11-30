@@ -36,6 +36,7 @@ public class NewTaskAcquirerService : INewTaskAcquirerService
             }
 
             var leaseEnd = DateTimeOffset.UtcNow.AddMinutes(Constants.LeaseDurationMinutes);
+            workerTask.LeaseEnd = leaseEnd;
 
             await _workerTaskRepository.UpdateLease(workerTask.Id, leaseEnd);
 

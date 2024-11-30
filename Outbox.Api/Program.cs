@@ -2,6 +2,7 @@ using Outbox.Api.Services;
 using Outbox.Core;
 using Outbox.Infrastructure;
 using Outbox.Infrastructure.Database;
+using Outbox.Infrastructure.Senders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +16,10 @@ builder.Services.AddGrpcReflection();
 
 builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddBackgroundWorkers();
-builder.Services.AddCore();
+builder.Services.AddProducers();
+builder.Services.AddCore(builder.Configuration);
+
+Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
 
 var app = builder.Build();
 

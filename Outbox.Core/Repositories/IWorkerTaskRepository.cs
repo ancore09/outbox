@@ -12,5 +12,6 @@ public interface IWorkerTaskRepository
     
     Task<WorkerTask?> GetFirstFreeTaskWithLock();
     Task UpdateLease(long id, DateTimeOffset leaseEnd);
+    Task UpdateLeases(List<(WorkerTask WorkerTask, DateTimeOffset LeaseEnd)> updateQuery);
     
 }

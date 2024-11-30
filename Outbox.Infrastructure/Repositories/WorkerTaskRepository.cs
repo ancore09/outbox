@@ -58,4 +58,11 @@ public class WorkerTaskRepository : IWorkerTaskRepository
 
         await _connection.ExecuteAsync(query, new {id = id, leaseEnd = leaseEnd});
     }
+
+    public async Task UpdateLeases(List<(WorkerTask WorkerTask, DateTimeOffset LeaseEnd)> updateQuery)
+    {
+        var prms = updateQuery.Select(x => new {id = x.WorkerTask.Id, leaseEnd = x.LeaseEnd}).ToList();
+            
+        await _connection.ExecuteAsync(@"update worker_task set lease_end = @leaseEnd where id = @id", prms);
+    }
 }
