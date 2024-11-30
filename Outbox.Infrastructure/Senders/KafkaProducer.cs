@@ -6,7 +6,7 @@ using Outbox.Core.Senders;
 
 namespace Outbox.Infrastructure.Senders;
 
-public class KafkaProducer: IOutboxMessageSender
+public class KafkaProducer : IOutboxMessageSender
 {
     private readonly SenderOptions _options;
     private readonly IProducer<string, string> _producer;
@@ -14,7 +14,7 @@ public class KafkaProducer: IOutboxMessageSender
     public KafkaProducer(IOptionsMonitor<SenderOptions> options)
     {
         _options = options.CurrentValue;
-        
+
         var producerConfig = new ProducerConfig
         {
             BootstrapServers = _options.Server,

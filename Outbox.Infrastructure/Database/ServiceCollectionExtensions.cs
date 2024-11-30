@@ -21,7 +21,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IWorkerTaskRepository, WorkerTaskRepository>();
         services.AddScoped<IOutboxRepository, OutboxRepository>();
-        
+
         return services;
     }
 }

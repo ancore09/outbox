@@ -23,7 +23,7 @@ public class OutboxRepository : IOutboxRepository
                     limit @batchSize;
                     """;
 
-        var result = await _connection.QueryAsync<OutboxMessage>(query, new {topic = topic, batchSize = batchSize});
+        var result = await _connection.QueryAsync<OutboxMessage>(query, new { topic = topic, batchSize = batchSize });
 
         return result.ToList();
     }
@@ -35,11 +35,11 @@ public class OutboxRepository : IOutboxRepository
                     where id = ANY (@idents);
                     """;
 
-        var result = await _connection.ExecuteAsync(query, new {idents = idents});
+        var result = await _connection.ExecuteAsync(query, new { idents = idents });
 
         return result;
     }
-    
+
     public async Task<int> InsertProduced(List<OutboxMessage> messages)
     {
         var query = """

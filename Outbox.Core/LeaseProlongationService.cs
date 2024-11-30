@@ -29,14 +29,18 @@ public class LeaseProlongationService : ILeaseProlongationService
             .Where(x => DateTimeOffset.UtcNow.AddSeconds(15) > x.LeaseEnd)
             .ToList();
 
+        if (tasksToProlong.Count is 0)
+            return;
+
         var updateQuery = tasksToProlong.
             Select(x => (x, x.LeaseEnd!.Value.AddMinutes(Constants.LeaseDurationMinutes)))
             .ToList();
-
 
         await _workerTaskRepository.UpdateLeases(updateQuery);
 
         foreach (var (workerTask, leaseEnd) in updateQuery)
             workerTask.LeaseEnd = leaseEnd;
+
+        _logger.LogInformation("Updated leases for tasks: {tasks}", (object)tasksToProlong.Select(x => x.Topic).ToArray());
     }
 }

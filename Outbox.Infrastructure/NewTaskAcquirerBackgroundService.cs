@@ -28,11 +28,11 @@ public class NewTaskAcquirerBackgroundService : BackgroundService
             var service = serviceProvider.GetRequiredService<INewTaskAcquirerService>();
 
             var result = await service.TryAcquireNewTask();
-            
+
             if (result)
                 continue;
 
-            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
         }
     }
 }

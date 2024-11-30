@@ -1,14 +1,36 @@
 using Outbox.Api.Services;
 using Outbox.Core;
+using Outbox.Core.Options;
 using Outbox.Infrastructure;
 using Outbox.Infrastructure.Database;
 using Outbox.Infrastructure.Senders;
+using Serilog;
+using Serilog.Events;
+using Serilog.Sinks.Graylog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration
     .AddYamlFile("config.yaml", optional: false, reloadOnChange: true)
-    .AddYamlFile($"config.{builder.Environment.EnvironmentName}.yaml", optional: true);
+    .AddYamlFile($"config.{builder.Environment.EnvironmentName}.yaml", optional: true, reloadOnChange: true);
+
+var graylogOptions = builder.Configuration.GetSection(GraylogOptions.Section).Get<GraylogOptions>();
+
+Log.Logger = new LoggerConfiguration()
+    // .MinimumLevel.Information()
+    // .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .WriteTo.Graylog(new GraylogSinkOptions
+    {
+        HostnameOrAddress = graylogOptions!.Host,
+        Port = graylogOptions.Port,
+        TransportType = Serilog.Sinks.Graylog.Core.Transport.TransportType.Udp,
+        // MinimumLogEventLevel = LogEventLevel.Information,
+        Facility = "Outbox"
+    })
+    .WriteTo.Console()
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 // Add services to the container.
 builder.Services.AddGrpc();

@@ -42,6 +42,8 @@ public class NewTaskAcquirerService : INewTaskAcquirerService
 
             _workerTaskRepository.Commit();
 
+            _logger.LogInformation("Acquired new task: {task}", workerTask.Topic);
+
             await _container.AddOrUpdateTask(workerTask);
 
             return true;

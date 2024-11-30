@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddCore(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<DatabaseOptions>(configuration.GetSection(DatabaseOptions.Section));
+        services.Configure<GraylogOptions>(configuration.GetSection(GraylogOptions.Section));
         services.Configure<SenderOptions>(configuration.GetSection(SenderOptions.Section));
 
         services.AddScoped<INewTaskAcquirerService, NewTaskAcquirerService>();

@@ -8,7 +8,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddProducers(this IServiceCollection services)
     {
         services.AddSingleton<IOutboxMessageSender, KafkaProducer>();
-        
+
         return services;
     }
 }

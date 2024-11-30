@@ -39,14 +39,14 @@ public class WorkerTasksContainer : IWorkerTasksContainer
             }
 
             var cts = CancellationTokenSource.CreateLinkedTokenSource(_globalCts.Token);
-                
+
             var task = Task.Run(async () =>
             {
                 try
                 {
                     await using var scope = _serviceProvider.CreateAsyncScope();
                     var service = scope.ServiceProvider.GetRequiredService<IOutboxSenderService>();
-                    
+
                     while (!cts.Token.IsCancellationRequested)
                     {
                         //await ProcessTask(config);
@@ -71,7 +71,7 @@ public class WorkerTasksContainer : IWorkerTasksContainer
             _semaphore.Release();
         }
     }
-    
+
     private async Task ProcessTask(WorkerTask config)
     {
         await using var scope = _serviceProvider.CreateAsyncScope();
