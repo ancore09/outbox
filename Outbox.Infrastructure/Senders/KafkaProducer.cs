@@ -26,7 +26,7 @@ public class KafkaProducer : IOutboxMessageSender
             // // Increase reliability
             // MessageSendMaxRetries = 3,
             // RetryBackoffMs = 1000,
-            LingerMs = 1,
+            LingerMs = 0,
             // EnableDeliveryReports = true
         };
 

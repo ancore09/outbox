@@ -1,7 +1,8 @@
-Logging:
-  LogLevel:
-    Default: Information
-    Microsoft.AspNetCore: Warning
+#Logging:
+#  LogLevel:
+#    Default: Information
+#    Microsoft.AspNetCore: Warning
+#    Microsoft.AspNetCore.Hosting.Diagnostics: Warning
 
 DatabaseOptions:
   Host: 192.168.1.115
@@ -20,7 +21,7 @@ GraylogOptions:
 
 Serilog:
   MinimumLevel:
-    Default: Debug
+    Default: Information
     Override:
       Microsoft: Warning
       System: Warning

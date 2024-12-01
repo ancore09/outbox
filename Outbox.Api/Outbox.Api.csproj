@@ -15,7 +15,14 @@
         <PackageReference Include="Grpc.AspNetCore" />
         <PackageReference Include="Grpc.AspNetCore.Server.Reflection" />
         <PackageReference Include="NetEscapades.Configuration.Yaml" />
+        <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" />
+        <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+        <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+        <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+        <PackageReference Include="OpenTelemetry.Instrumentation.Process" />
+        <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
         <PackageReference Include="Serilog.AspNetCore" />
+        <PackageReference Include="Serilog.Settings.Configuration" />
         <PackageReference Include="Serilog.Sinks.Graylog" />
     </ItemGroup>
 

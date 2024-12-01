@@ -1,13 +1,13 @@
-Logging:
-  LogLevel:
-    Default: Information
-    Microsoft.AspNetCore: Warning
+#Logging:
+#  LogLevel:
+#    Default: Information
+#    Microsoft.AspNetCore: Warning
 
 AllowedHosts: "*"
 
-Kestrel:
-  EndpointDefaults:
-    Protocols: Http2
+#Kestrel:
+#  EndpointDefaults:
+#    Protocols: Http2
     
 Database:
   Host: localhost

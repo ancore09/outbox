@@ -1,5 +1,8 @@
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using Outbox.Api.Services;
 using Outbox.Core;
+using Outbox.Core.Metrics;
 using Outbox.Core.Options;
 using Outbox.Infrastructure;
 using Outbox.Infrastructure.Database;
@@ -16,21 +19,39 @@ builder.Configuration
 
 var graylogOptions = builder.Configuration.GetSection(GraylogOptions.Section).Get<GraylogOptions>();
 
-Log.Logger = new LoggerConfiguration()
-    // .MinimumLevel.Information()
-    // .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-    .WriteTo.Graylog(new GraylogSinkOptions
-    {
-        HostnameOrAddress = graylogOptions!.Host,
-        Port = graylogOptions.Port,
-        TransportType = Serilog.Sinks.Graylog.Core.Transport.TransportType.Udp,
-        // MinimumLogEventLevel = LogEventLevel.Information,
-        Facility = "Outbox"
-    })
-    .WriteTo.Console()
-    .CreateLogger();
 
-builder.Host.UseSerilog();
+builder.Host.UseSerilog((context, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(builder.Configuration)
+        .Enrich.FromLogContext()
+        .WriteTo.Graylog(new GraylogSinkOptions
+        {
+            HostnameOrAddress = graylogOptions!.Host,
+            Port = graylogOptions.Port,
+            TransportType = Serilog.Sinks.Graylog.Core.Transport.TransportType.Udp,
+            // MinimumLogEventLevel = LogEventLevel.Information,
+            Facility = "Outbox"
+        })
+        .WriteTo.Console();
+});
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService(serviceName: "Outbox"))
+    .WithMetrics(metrics => metrics
+        // Add default instrumentation
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        // Add Prometheus exporter
+        .AddPrometheusExporter()
+        .AddRuntimeInstrumentation()
+        .AddProcessInstrumentation()
+        // Add your custom meter
+        .AddMeter("Outbox")
+    );
+
+builder.Services.AddSingleton<IMetricsContainer, MetricsContainer>();
 
 // Add services to the container.
 builder.Services.AddGrpc();
@@ -48,8 +69,6 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 app.MapGrpcReflectionService();
 app.MapGrpcService<GreeterService>();
-app.MapGet("/",
-    () =>
-        "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
 app.Run();

@@ -44,13 +44,14 @@ public class WorkerTasksContainer : IWorkerTasksContainer
             {
                 try
                 {
-                    await using var scope = _serviceProvider.CreateAsyncScope();
-                    var service = scope.ServiceProvider.GetRequiredService<IOutboxSenderService>();
-
                     while (!cts.Token.IsCancellationRequested)
                     {
-                        //await ProcessTask(config);
-                        await service.SendMessages(config);
+                        bool processed = false;
+                        do
+                        {
+                            processed = await ProcessTask(config);
+                        } while (processed);
+                        // await service.SendMessages(config);
                         await Task.Delay(config.DelayMilliseconds, cts.Token);
                     }
                 }
@@ -72,12 +73,12 @@ public class WorkerTasksContainer : IWorkerTasksContainer
         }
     }
 
-    private async Task ProcessTask(WorkerTask config)
+    private async Task<bool> ProcessTask(WorkerTask config)
     {
         await using var scope = _serviceProvider.CreateAsyncScope();
         var service = scope.ServiceProvider.GetRequiredService<IOutboxSenderService>();
 
-        await service.SendMessages(config);
+        return await service.SendMessages(config);
     }
 
     public async Task CancelAndRemoveTask(string topic)
@@ -85,6 +86,7 @@ public class WorkerTasksContainer : IWorkerTasksContainer
         if (_container.TryRemove(topic, out var existing))
         {
             await existing.Cts.CancelAsync();
+            await existing.Task;
         }
     }
 
@@ -95,7 +97,6 @@ public class WorkerTasksContainer : IWorkerTasksContainer
 
     public void Dispose()
     {
-        // _leaseCheckTimer.Dispose();
         _globalCts.Cancel();
         _semaphore.Dispose();
         foreach (var (_, (_, cts, _)) in _container)
