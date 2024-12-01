@@ -14,7 +14,7 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": false,
-      "applicationUrl": "http://0.0.0.0:5113",
+      "applicationUrl": "http://0.0.0.0:5113,http://0.0.0.0:5114",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Staging"
       }
