@@ -1,24 +1,23 @@
 using Microsoft.Extensions.Logging;
 using Outbox.Core.Metrics;
-using Outbox.Core.Models;
 using Outbox.Core.Repositories;
 using Outbox.Core.Senders;
 
-namespace Outbox.Core;
+namespace Outbox.Core.Pessimistic;
 
-public interface IOutboxSenderService
+public interface IPessimisticOutboxProcessor
 {
-    Task<bool> SendMessages(WorkerTask config);
+    Task<bool> SendMessages(int batchSize);
 }
 
-public class OutboxSenderService : IOutboxSenderService
+public class PessimisticOutboxProcessor : IPessimisticOutboxProcessor
 {
     private readonly IOutboxRepository _outboxRepository;
     private readonly IOutboxMessageSender _sender;
-    private readonly ILogger<OutboxSenderService> _logger;
+    private readonly ILogger<PessimisticOutboxProcessor> _logger;
     private readonly IMetricsContainer _metrics;
 
-    public OutboxSenderService(IOutboxRepository outboxRepository, IOutboxMessageSender sender, ILogger<OutboxSenderService> logger, IMetricsContainer metrics)
+    public PessimisticOutboxProcessor(IOutboxRepository outboxRepository, IOutboxMessageSender sender, ILogger<PessimisticOutboxProcessor> logger, IMetricsContainer metrics)
     {
         _outboxRepository = outboxRepository;
         _sender = sender;
@@ -26,12 +25,10 @@ public class OutboxSenderService : IOutboxSenderService
         _metrics = metrics;
     }
 
-    public async Task<bool> SendMessages(WorkerTask config)
-    {
-        if (config.IsLeaseExpired())
-            return false;
 
-        var messages = await _outboxRepository.GetMessages(config.Topic, config.BatchSize);
+    public async Task<bool> SendMessages(int batchSize)
+    {
+        var messages = await _outboxRepository.GetMessagesWithLock(batchSize);
 
         if (messages.Count is 0)
             return false;

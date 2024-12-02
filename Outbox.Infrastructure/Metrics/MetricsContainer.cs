@@ -1,7 +1,7 @@
 using System.Diagnostics.Metrics;
 using Outbox.Core.Metrics;
 
-namespace Outbox.Infrastructure;
+namespace Outbox.Infrastructure.Metrics;
 
 public class MetricsContainer : IMetricsContainer
 {

@@ -6,6 +6,7 @@ using Outbox.Core.Metrics;
 using Outbox.Core.Options;
 using Outbox.Infrastructure;
 using Outbox.Infrastructure.Database;
+using Outbox.Infrastructure.Metrics;
 using Outbox.Infrastructure.Senders;
 using Serilog;
 using Serilog.Events;

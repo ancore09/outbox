@@ -12,4 +12,8 @@
       <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Optimistic\" />
+    </ItemGroup>
+
 </Project>

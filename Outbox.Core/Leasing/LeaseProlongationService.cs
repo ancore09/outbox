@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Outbox.Core.Repositories;
 
-namespace Outbox.Core;
+namespace Outbox.Core.Leasing;
 
 public interface ILeaseProlongationService
 {

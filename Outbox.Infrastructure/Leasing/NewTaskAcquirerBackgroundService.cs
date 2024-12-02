@@ -1,8 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Outbox.Core;
+using Outbox.Core.Leasing;
 
-namespace Outbox.Infrastructure;
+namespace Outbox.Infrastructure.Leasing;
 
 public class NewTaskAcquirerBackgroundService : BackgroundService
 {

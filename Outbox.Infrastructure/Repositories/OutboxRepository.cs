@@ -1,3 +1,4 @@
+using System.Data;
 using Dapper;
 using Npgsql;
 using Outbox.Core.Models;
@@ -12,6 +13,36 @@ public class OutboxRepository : IOutboxRepository
     public OutboxRepository(NpgsqlConnection connection)
     {
         _connection = connection;
+    }
+
+    public async Task<List<OutboxMessage>> GetMessagesWithLock(int batchSize)
+    {
+        if (_connection.State is not ConnectionState.Open)
+            await _connection.OpenAsync();
+
+        await using var transaction = await _connection.BeginTransactionAsync();
+
+        var selectQuery = """
+                    select * from outbox
+                    where state = 0
+                    order by id
+                    limit @batchSize
+                    for update skip locked;
+                    """;
+
+        var result = (await _connection.QueryAsync<OutboxMessage>(selectQuery, new { batchSize = batchSize })).ToList();
+
+        var updateQuery = """
+                          update outbox
+                          set state = 1
+                          where id = ANY(@idents)
+                          """;
+
+        await _connection.ExecuteAsync(updateQuery, new { idents = result.Select(x => x.Id).ToArray() });
+
+        await transaction.CommitAsync();
+
+        return result;
     }
 
     public async Task<List<OutboxMessage>> GetMessages(string topic, int batchSize)

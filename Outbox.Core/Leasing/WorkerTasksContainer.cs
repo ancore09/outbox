@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Outbox.Core.Models;
 
-namespace Outbox.Core;
+namespace Outbox.Core.Leasing;
 
 public interface IWorkerTasksContainer : IDisposable
 {
@@ -76,7 +76,7 @@ public class WorkerTasksContainer : IWorkerTasksContainer
     private async Task<bool> ProcessTask(WorkerTask config)
     {
         await using var scope = _serviceProvider.CreateAsyncScope();
-        var service = scope.ServiceProvider.GetRequiredService<IOutboxSenderService>();
+        var service = scope.ServiceProvider.GetRequiredService<ILeasingOutboxProcessor>();
 
         return await service.SendMessages(config);
     }

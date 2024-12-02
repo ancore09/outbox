@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
-using Npgsql;
 using Outbox.Core.Options;
 using Outbox.Core.Repositories;
 using Outbox.Infrastructure.Repositories;
