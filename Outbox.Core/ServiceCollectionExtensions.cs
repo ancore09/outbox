@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Outbox.Core.Leasing;
+using Outbox.Core.Optimistic;
 using Outbox.Core.Options;
 using Outbox.Core.Pessimistic;
 
@@ -17,6 +18,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ILeasingOutboxProcessor, LeasingLeasingOutboxProcessor>();
 
         services.AddLeasing();
+        services.AddOptimistic();
         // services.AddPessimistic();
 
         return services;
@@ -34,6 +36,13 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddPessimistic(this IServiceCollection services)
     {
         services.AddScoped<IPessimisticOutboxProcessor, PessimisticOutboxProcessor>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddOptimistic(this IServiceCollection services)
+    {
+        services.AddScoped<IOptimiticOutboxProcessor, OptimiticOutboxProcessor>();
 
         return services;
     }

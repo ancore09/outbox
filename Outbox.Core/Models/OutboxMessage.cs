@@ -8,4 +8,6 @@ public class OutboxMessage
     public required string Payload { get; set; }
 
     public required int State { get; set; } // 0 - new, 1 - sending
+
+    public int? Xmin { get; set; }
 }

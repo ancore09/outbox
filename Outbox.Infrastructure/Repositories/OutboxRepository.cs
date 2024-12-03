@@ -1,5 +1,6 @@
 using System.Data;
 using Dapper;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 using Outbox.Core.Models;
 using Outbox.Core.Repositories;
@@ -9,10 +10,12 @@ namespace Outbox.Infrastructure.Repositories;
 public class OutboxRepository : IOutboxRepository
 {
     private readonly NpgsqlConnection _connection;
+    private readonly ILogger<OutboxRepository> _logger;
 
-    public OutboxRepository(NpgsqlConnection connection)
+    public OutboxRepository(NpgsqlConnection connection, ILogger<OutboxRepository> logger)
     {
         _connection = connection;
+        _logger = logger;
     }
 
     public async Task<List<OutboxMessage>> GetMessagesWithLock(int batchSize)
@@ -41,6 +44,37 @@ public class OutboxRepository : IOutboxRepository
         await _connection.ExecuteAsync(updateQuery, new { idents = result.Select(x => x.Id).ToArray() });
 
         await transaction.CommitAsync();
+
+        return result;
+    }
+
+    public async Task<OutboxMessage?> GetFirstMessage()
+    {
+        var selectQuery = """
+                          select *, xmin from outbox
+                          where state = 0
+                          order by id
+                          limit 1;
+                          """;
+
+        var result = await _connection.QueryFirstOrDefaultAsync<OutboxMessage>(selectQuery);
+
+        if (result is null)
+            return null;
+
+        var updateQuery = """
+                          update outbox
+                          set state = 1
+                          where id = @id and state = 0 and xmin = @xmin
+                          """;
+
+        var updated = await _connection.ExecuteAsync(updateQuery, new { id = result.Id, xmin = result.Xmin });
+
+        if (updated is 0)
+        {
+            _logger.LogInformation("Optimistic concurrency exception");
+            return null;
+        }
 
         return result;
     }
