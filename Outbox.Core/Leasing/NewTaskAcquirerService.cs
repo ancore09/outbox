@@ -1,4 +1,6 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Outbox.Core.Options;
 using Outbox.Core.Repositories;
 
 namespace Outbox.Core.Leasing;
@@ -13,12 +15,14 @@ public class NewTaskAcquirerService : INewTaskAcquirerService
     private readonly IWorkerTaskRepository _workerTaskRepository;
     private readonly IWorkerTasksContainer _container;
     private readonly ILogger<NewTaskAcquirerService> _logger;
+    private readonly IOptionsMonitor<LeasingOptions> _options;
 
-    public NewTaskAcquirerService(IWorkerTaskRepository workerTaskRepository, IWorkerTasksContainer container, ILogger<NewTaskAcquirerService> logger)
+    public NewTaskAcquirerService(IWorkerTaskRepository workerTaskRepository, IWorkerTasksContainer container, ILogger<NewTaskAcquirerService> logger, IOptionsMonitor<LeasingOptions> options)
     {
         _workerTaskRepository = workerTaskRepository;
         _container = container;
         _logger = logger;
+        _options = options;
     }
 
     public async Task<bool> TryAcquireNewTask()
@@ -35,7 +39,7 @@ public class NewTaskAcquirerService : INewTaskAcquirerService
                 return false;
             }
 
-            var leaseEnd = DateTimeOffset.UtcNow.AddMinutes(Constants.LeaseDurationMinutes);
+            var leaseEnd = DateTimeOffset.UtcNow.AddMinutes(_options.CurrentValue.LeaseDurationMinutes);
             workerTask.LeaseEnd = leaseEnd;
 
             await _workerTaskRepository.UpdateLease(workerTask.Id, leaseEnd);

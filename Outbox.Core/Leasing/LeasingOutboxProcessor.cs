@@ -44,7 +44,7 @@ public class LeasingLeasingOutboxProcessor : ILeasingOutboxProcessor
             _metrics.AddProduced();
         }
 
-        await _outboxRepository.DeleteMessages(messages.Select(x => x.Id).ToList());
+        await _outboxRepository.DeleteMessagesByIdAndTopic(messages.Select(x => x.Id).ToList(), config.Topic);
 
         return true;
     }

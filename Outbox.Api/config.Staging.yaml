@@ -5,7 +5,8 @@
 #    Microsoft.AspNetCore.Hosting.Diagnostics: Warning
 
 DatabaseOptions:
-  Host: 192.168.1.115
+#  Host: 192.168.1.115
+  Host: 79.174.84.143
   Port: 5432
   Database: outbox
   Username: postgres
@@ -25,3 +26,28 @@ Serilog:
     Override:
       Microsoft: Warning
       System: Warning
+      
+OutboxOptions:
+#  Type: Leasing
+#  Type: Pessimistic
+  Type: Optimistic
+  
+LeasingOptions:
+  NewTaskCheckIntervalSeconds: 10
+  TaskProlongationCheckIntervalSeconds: 10
+  TaskProlongationThresholdSeconds: 15
+  LeaseDurationMinutes: 1
+  ThrottlingMilliseconds: 10
+  DelaySeconds: 10
+  
+PessimisticOptions:
+  BatchSize: 500
+  Workers: 5
+  ThrottlingMilliseconds: 10
+  DelaySeconds: 10
+  
+OptimisticOptions:
+  ThrottlingMilliseconds: 10
+  DelaySeconds: 10
+  Workers: 100
+  RandomRange: 200

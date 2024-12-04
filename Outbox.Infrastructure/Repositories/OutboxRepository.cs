@@ -48,19 +48,21 @@ public class OutboxRepository : IOutboxRepository
         return result;
     }
 
-    public async Task<OutboxMessage?> GetFirstMessage()
+    public async Task<OutboxMessage?> GetFirstMessage(int randomRange)
     {
         var selectQuery = """
                           select *, xmin from outbox
                           where state = 0
                           order by id
-                          limit 1;
+                          limit @randomRange;
                           """;
 
-        var result = await _connection.QueryFirstOrDefaultAsync<OutboxMessage>(selectQuery);
+        var result = (await _connection.QueryAsync<OutboxMessage>(selectQuery, new { randomRange = randomRange })).ToList();
 
-        if (result is null)
+        if (result.Count is 0)
             return null;
+
+        var message = result[Random.Shared.Next(result.Count)];
 
         var updateQuery = """
                           update outbox
@@ -68,7 +70,9 @@ public class OutboxRepository : IOutboxRepository
                           where id = @id and state = 0 and xmin = @xmin
                           """;
 
-        var updated = await _connection.ExecuteAsync(updateQuery, new { id = result.Id, xmin = result.Xmin });
+        var updated = await _connection.ExecuteAsync(updateQuery, new { id = message.Id, xmin = message.Xmin });
+
+        await _connection.CloseAsync();
 
         if (updated is 0)
         {
@@ -76,7 +80,7 @@ public class OutboxRepository : IOutboxRepository
             return null;
         }
 
-        return result;
+        return message;
     }
 
     public async Task<List<OutboxMessage>> GetMessages(string topic, int batchSize)
@@ -93,14 +97,26 @@ public class OutboxRepository : IOutboxRepository
         return result.ToList();
     }
 
-    public async Task<int> DeleteMessages(List<long> idents)
+    public async Task<int> DeleteMessagesByIdAndState(List<long> idents)
     {
         var query = """
                     delete from outbox
-                    where id = ANY (@idents);
+                    where state = 1 and id = ANY (@idents);
                     """;
 
         var result = await _connection.ExecuteAsync(query, new { idents = idents });
+
+        return result;
+    }
+
+    public async Task<int> DeleteMessagesByIdAndTopic(List<long> idents, string topic)
+    {
+        var query = """
+                    delete from outbox
+                    where topic = @topic and id = ANY (@idents);
+                    """;
+
+        var result = await _connection.ExecuteAsync(query, new { topic = topic, idents = idents });
 
         return result;
     }

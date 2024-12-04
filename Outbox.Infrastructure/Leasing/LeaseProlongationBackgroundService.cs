@@ -1,16 +1,20 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Outbox.Core.Leasing;
+using Outbox.Core.Options;
 
 namespace Outbox.Infrastructure.Leasing;
 
 public class LeaseProlongationBackgroundService : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly IOptionsMonitor<LeasingOptions> _options;
 
-    public LeaseProlongationBackgroundService(IServiceProvider serviceProvider)
+    public LeaseProlongationBackgroundService(IServiceProvider serviceProvider, IOptionsMonitor<LeasingOptions> options)
     {
         _serviceProvider = serviceProvider;
+        _options = options;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -29,7 +33,7 @@ public class LeaseProlongationBackgroundService : BackgroundService
 
             await service.TryProlongLeases();
 
-            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(_options.CurrentValue.TaskProlongationCheckIntervalSeconds), stoppingToken);
         }
     }
 }

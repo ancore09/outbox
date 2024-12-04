@@ -1,4 +1,6 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Outbox.Core.Options;
 using Outbox.Core.Repositories;
 
 namespace Outbox.Core.Leasing;
@@ -13,12 +15,14 @@ public class LeaseProlongationService : ILeaseProlongationService
     private readonly IWorkerTaskRepository _workerTaskRepository;
     private readonly IWorkerTasksContainer _container;
     private readonly ILogger<LeaseProlongationService> _logger;
+    private readonly IOptionsMonitor<LeasingOptions> _options;
 
-    public LeaseProlongationService(IWorkerTaskRepository workerTaskRepository, IWorkerTasksContainer container, ILogger<LeaseProlongationService> logger)
+    public LeaseProlongationService(IWorkerTaskRepository workerTaskRepository, IWorkerTasksContainer container, ILogger<LeaseProlongationService> logger, IOptionsMonitor<LeasingOptions> options)
     {
         _workerTaskRepository = workerTaskRepository;
         _container = container;
         _logger = logger;
+        _options = options;
     }
 
     public async Task TryProlongLeases()
@@ -26,14 +30,14 @@ public class LeaseProlongationService : ILeaseProlongationService
         var tasks = await _container.GetWorkerTasks();
 
         var tasksToProlong = tasks
-            .Where(x => DateTimeOffset.UtcNow.AddSeconds(15) > x.LeaseEnd)
+            .Where(x => DateTimeOffset.UtcNow.AddSeconds(_options.CurrentValue.TaskProlongationThresholdSeconds) > x.LeaseEnd)
             .ToList();
 
         if (tasksToProlong.Count is 0)
             return;
 
         var updateQuery = tasksToProlong.
-            Select(x => (x, x.LeaseEnd!.Value.AddMinutes(Constants.LeaseDurationMinutes)))
+            Select(x => (x, x.LeaseEnd!.Value.AddMinutes(_options.CurrentValue.LeaseDurationMinutes)))
             .ToList();
 
         await _workerTaskRepository.UpdateLeases(updateQuery);

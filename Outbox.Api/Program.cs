@@ -59,7 +59,7 @@ builder.Services.AddGrpc();
 builder.Services.AddGrpcReflection();
 
 builder.Services.AddDatabase(builder.Configuration);
-builder.Services.AddBackgroundWorkers();
+builder.Services.AddBackgroundWorkers(builder.Configuration);
 builder.Services.AddProducers();
 builder.Services.AddCore(builder.Configuration);
 

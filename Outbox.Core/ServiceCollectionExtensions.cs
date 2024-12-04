@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Outbox.Core.Leasing;
+using Outbox.Core.Models;
 using Outbox.Core.Optimistic;
 using Outbox.Core.Options;
 using Outbox.Core.Pessimistic;
@@ -15,10 +16,33 @@ public static class ServiceCollectionExtensions
         services.Configure<GraylogOptions>(configuration.GetSection(GraylogOptions.Section));
         services.Configure<SenderOptions>(configuration.GetSection(SenderOptions.Section));
 
-        services.AddScoped<ILeasingOutboxProcessor, LeasingLeasingOutboxProcessor>();
 
-        services.AddLeasing();
-        services.AddOptimistic();
+        services.Configure<LeasingOptions>(configuration.GetSection(LeasingOptions.Section));
+        services.Configure<PessimisticOptions>(configuration.GetSection(PessimisticOptions.Section));
+        services.Configure<OptimisticOptions>(configuration.GetSection(OptimisticOptions.Section));
+
+        var outboxOptionsSection = configuration.GetSection(OutboxOptions.Section);
+
+        var outboxOptions = outboxOptionsSection.Get<OutboxOptions>();
+
+        switch (outboxOptions.Type)
+        {
+            case OutboxType.Leasing:
+                services.AddLeasing();
+                break;
+            case OutboxType.Pessimistic:
+                services.AddPessimistic();
+                break;
+            case OutboxType.Optimistic:
+                services.AddOptimistic();
+                break;
+        }
+
+        services.Configure<OutboxOptions>(outboxOptionsSection);
+
+
+        // services.AddLeasing();
+        // services.AddOptimistic();
         // services.AddPessimistic();
 
         return services;
@@ -29,6 +53,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<INewTaskAcquirerService, NewTaskAcquirerService>();
         services.AddSingleton<IWorkerTasksContainer, WorkerTasksContainer>();
         services.AddScoped<ILeaseProlongationService, LeaseProlongationService>();
+        services.AddScoped<ILeasingOutboxProcessor, LeasingLeasingOutboxProcessor>();
 
         return services;
     }

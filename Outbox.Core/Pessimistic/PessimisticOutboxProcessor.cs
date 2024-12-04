@@ -41,7 +41,7 @@ public class PessimisticOutboxProcessor : IPessimisticOutboxProcessor
             _metrics.AddProduced();
         }
 
-        await _outboxRepository.DeleteMessages(messages.Select(x => x.Id).ToList());
+        await _outboxRepository.DeleteMessagesByIdAndState(messages.Select(x => x.Id).ToList());
 
         return true;
     }
