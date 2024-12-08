@@ -11,6 +11,7 @@ namespace Outbox.Core.Optimistic;
 public interface IOptimiticOutboxProcessor
 {
     Task<bool> SendMessages();
+    Task<bool> SendMessages(int reminder);
 }
 
 public class OptimiticOutboxProcessor : IOptimiticOutboxProcessor
@@ -34,9 +35,32 @@ public class OptimiticOutboxProcessor : IOptimiticOutboxProcessor
     public async Task<bool> SendMessages()
     {
         var outboxMessage = await _outboxRepository.GetFirstMessage(_options.CurrentValue.RandomRange);
+        _metrics.AddProduceTry();
 
         if (outboxMessage is null)
+        {
+            _metrics.AddError();
             return true;
+        }
+
+        await _sender.Send(outboxMessage);
+        _metrics.AddProduced();
+
+        await _outboxRepository.DeleteMessagesByIdAndState([outboxMessage.Id]);
+
+        return true;
+    }
+
+    public async Task<bool> SendMessages(int reminder)
+    {
+        var outboxMessage = await _outboxRepository.GetFirstMessageByReminder(_options.CurrentValue.RandomRange, _options.CurrentValue.Reminders, reminder);
+        _metrics.AddProduceTry();
+
+        if (outboxMessage is null)
+        {
+            _metrics.AddError();
+            return true;
+        }
 
         await _sender.Send(outboxMessage);
         _metrics.AddProduced();

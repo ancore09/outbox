@@ -18,6 +18,16 @@ public class OutboxRepository : IOutboxRepository
         _logger = logger;
     }
 
+    public async Task InsertMessages(List<OutboxMessage> messages)
+    {
+        var insertQuery = """
+                          insert into outbox(key, payload, topic, state)
+                          values (@Key, @Payload, @Topic, @State)
+                          """;
+
+        await _connection.ExecuteAsync(insertQuery, messages);
+    }
+
     public async Task<List<OutboxMessage>> GetMessagesWithLock(int batchSize)
     {
         if (_connection.State is not ConnectionState.Open)
@@ -62,7 +72,10 @@ public class OutboxRepository : IOutboxRepository
         if (result.Count is 0)
             return null;
 
-        var message = result[Random.Shared.Next(result.Count)];
+        // var randIndex = new Random(new Guid().GetHashCode()).Next(result.Count);
+        var randIndex = Enumerable.Range(1, 3).Aggregate((i, i1) => Random.Shared.Next(1, result.Count));
+
+        var message = result[randIndex % result.Count];
 
         var updateQuery = """
                           update outbox
@@ -72,7 +85,42 @@ public class OutboxRepository : IOutboxRepository
 
         var updated = await _connection.ExecuteAsync(updateQuery, new { id = message.Id, xmin = message.Xmin });
 
-        await _connection.CloseAsync();
+        // await _connection.CloseAsync();
+
+        if (updated is 0)
+        {
+            _logger.LogInformation("Optimistic concurrency exception");
+            return null;
+        }
+
+        return message;
+    }
+    
+    public async Task<OutboxMessage?> GetFirstMessageByReminder(int randomRange, int remindersCount, int reminder)
+    {
+        var selectQuery = """
+                          select *, xmin from outbox
+                          where state = 0 and id % @remindersCount = @reminder
+                          order by id
+                          limit @randomRange;
+                          """;
+
+        var result = (await _connection.QueryAsync<OutboxMessage>(selectQuery, new { randomRange = randomRange, remindersCount = remindersCount, reminder = reminder })).ToList();
+        
+        if (result.Count is 0)
+            return null;
+        
+        var message = result[Random.Shared.Next(0, result.Count)];
+
+        var updateQuery = """
+                          update outbox
+                          set state = 1
+                          where id = @id and state = 0 and xmin = @xmin
+                          """;
+
+        var updated = await _connection.ExecuteAsync(updateQuery, new { id = message.Id, xmin = message.Xmin });
+
+        // await _connection.CloseAsync();
 
         if (updated is 0)
         {

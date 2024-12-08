@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Outbox.Core.Generator;
 using Outbox.Core.Leasing;
 using Outbox.Core.Models;
 using Outbox.Core.Optimistic;
@@ -39,6 +40,9 @@ public static class ServiceCollectionExtensions
         }
 
         services.Configure<OutboxOptions>(outboxOptionsSection);
+        services.Configure<GeneratorOptions>(configuration.GetSection(GeneratorOptions.Section));
+
+        services.AddScoped<IGeneratorService, GeneratorService>();
 
 
         // services.AddLeasing();

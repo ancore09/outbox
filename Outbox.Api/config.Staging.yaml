@@ -6,11 +6,10 @@
 
 DatabaseOptions:
 #  Host: 192.168.1.115
-  Host: 79.174.84.143
   Port: 5432
   Database: outbox
-  Username: postgres
-  Password: postgres
+  Username: outbox
+  Password: outbox
 
 SenderOptions:
   Server: "192.168.1.115:9092"
@@ -28,6 +27,7 @@ Serilog:
       System: Warning
       
 OutboxOptions:
+#  Type: None
 #  Type: Leasing
 #  Type: Pessimistic
   Type: Optimistic
@@ -47,7 +47,13 @@ PessimisticOptions:
   DelaySeconds: 10
   
 OptimisticOptions:
-  ThrottlingMilliseconds: 10
+  ThrottlingMilliseconds: 0
   DelaySeconds: 10
+  Reminders: 25
   Workers: 100
-  RandomRange: 200
+  RandomRange: 20
+  
+GeneratorOptions:
+  Enabled: false
+  IntervalSeconds: 0
+  BatchSize: 10000

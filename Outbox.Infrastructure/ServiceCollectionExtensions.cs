@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Outbox.Core;
 using Outbox.Core.Models;
 using Outbox.Core.Options;
+using Outbox.Infrastructure.Generator;
 using Outbox.Infrastructure.Leasing;
 using Outbox.Infrastructure.Optimistic;
 using Outbox.Infrastructure.Pessimistic;
@@ -17,18 +18,23 @@ public static class ServiceCollectionExtensions
 
         var outboxOptions = outboxOptionsSection.Get<OutboxOptions>();
 
-        switch (outboxOptions.Type)
+        if (outboxOptions is not null)
         {
-            case OutboxType.Leasing:
-                services.AddLeasingBackgroundWorkers();
-                break;
-            case OutboxType.Pessimistic:
-                services.AddPessimisticBackgroundWorkers();
-                break;
-            case OutboxType.Optimistic:
-                services.AddOptimisticBackgroundWorkers();
-                break;
+            switch (outboxOptions.Type)
+            {
+                case OutboxType.Leasing:
+                    services.AddLeasingBackgroundWorkers();
+                    break;
+                case OutboxType.Pessimistic:
+                    services.AddPessimisticBackgroundWorkers();
+                    break;
+                case OutboxType.Optimistic:
+                    services.AddOptimisticBackgroundWorkers();
+                    break;
+            }
         }
+        
+        services.AddHostedService<GeneratorBackgroundService>();
 
         // services.AddLeasingBackgroundWorkers();
         // services.AddOptimisticBackgroundWorkers();
