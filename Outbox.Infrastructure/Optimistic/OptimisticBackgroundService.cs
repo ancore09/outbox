@@ -25,8 +25,8 @@ public class OptimisticBackgroundService : BackgroundService
 
         _logger.LogInformation("Optimistic Outbox started");
 
-        // var tasks = Enumerable.Range(1, _options.CurrentValue.Workers).Select(x => StartWork(stoppingToken)).ToList();
-        var tasks = Enumerable.Range(0, _options.CurrentValue.Workers).Select(i => StartWorkByReminder(i, stoppingToken)).ToList();
+        var tasks = Enumerable.Range(1, _options.CurrentValue.Workers).Select(x => StartWork(stoppingToken)).ToList();
+        // var tasks = Enumerable.Range(0, _options.CurrentValue.Workers).Select(i => StartWorkByReminder(i, stoppingToken)).ToList();
 
         await Task.WhenAll(tasks);
     }
