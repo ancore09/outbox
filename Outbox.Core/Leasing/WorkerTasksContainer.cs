@@ -44,12 +44,16 @@ public class WorkerTasksContainer : IWorkerTasksContainer
             {
                 try
                 {
+                    // if (config.Topic == "test5")
+                    //     throw new Exception("Test exception");
+                    
                     while (!cts.Token.IsCancellationRequested)
                     {
                         bool processed = false;
                         do
                         {
                             processed = await ProcessTask(config);
+                            await Task.Delay(config.DelayMilliseconds, cts.Token);
                         } while (processed);
                         // await service.SendMessages(config);
                         await Task.Delay(config.DelayMilliseconds, cts.Token);
@@ -62,6 +66,7 @@ public class WorkerTasksContainer : IWorkerTasksContainer
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error processing task {Topic}", config.Topic);
+                    await CancelAndRemoveTask(config.Topic);
                 }
             }, cts.Token);
 

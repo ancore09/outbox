@@ -10,5 +10,5 @@ public class DatabaseOptions
     public required string Password { get; set; }
 
     public string ConnectionString =>
-        $"Host={Host};Port={Port};Database={Database};Username={Username};Password={Password};Minimum Pool Size=40;Maximum Pool Size=100;";
+        $"Host={Host};Port={Port};Database={Database};Username={Username};Password={Password};Minimum Pool Size=20;Maximum Pool Size=20;";
 }

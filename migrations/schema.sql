@@ -6,7 +6,7 @@ create table public.outbox (
     state integer
 );
 
-create index outbox_topic_id on outbox (topic, id);
+create index outbox_id_topic on outbox (id, topic);
 create index outbox_state_1_id on outbox (state, id) where state = 1;
 create index outbox_state_0_id on outbox (state, id) where state = 0;
 

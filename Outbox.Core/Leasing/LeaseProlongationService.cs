@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Outbox.Core.Metrics;
 using Outbox.Core.Options;
 using Outbox.Core.Repositories;
 
@@ -16,13 +17,15 @@ public class LeaseProlongationService : ILeaseProlongationService
     private readonly IWorkerTasksContainer _container;
     private readonly ILogger<LeaseProlongationService> _logger;
     private readonly IOptionsMonitor<LeasingOptions> _options;
+    private readonly IMetricsContainer _metrics;
 
-    public LeaseProlongationService(IWorkerTaskRepository workerTaskRepository, IWorkerTasksContainer container, ILogger<LeaseProlongationService> logger, IOptionsMonitor<LeasingOptions> options)
+    public LeaseProlongationService(IWorkerTaskRepository workerTaskRepository, IWorkerTasksContainer container, ILogger<LeaseProlongationService> logger, IOptionsMonitor<LeasingOptions> options, IMetricsContainer metrics)
     {
         _workerTaskRepository = workerTaskRepository;
         _container = container;
         _logger = logger;
         _options = options;
+        _metrics = metrics;
     }
 
     public async Task TryProlongLeases()
@@ -43,8 +46,14 @@ public class LeaseProlongationService : ILeaseProlongationService
         await _workerTaskRepository.UpdateLeases(updateQuery);
 
         foreach (var (workerTask, leaseEnd) in updateQuery)
+        {
             workerTask.LeaseEnd = leaseEnd;
+            _logger.LogInformation("Lease for {task} has been prolonged till {leaseEnd}", workerTask.Topic, workerTask.LeaseEnd);
+        }
 
-        _logger.LogInformation("Updated leases for tasks: {tasks}", (object)tasksToProlong.Select(x => x.Topic).ToArray());
+        var topics = tasksToProlong.Select(x => x.Topic).ToArray();
+        _logger.LogInformation("Leases for tasks have been prolonged: {tasks}", (object)topics);
+        _metrics.AddTaskEvent("prolongation", topics);
+
     }
 }

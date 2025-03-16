@@ -1,7 +1,9 @@
 using System.Data;
+using System.Diagnostics;
 using Dapper;
 using Microsoft.Extensions.Logging;
 using Npgsql;
+using Outbox.Core.Metrics;
 using Outbox.Core.Models;
 using Outbox.Core.Repositories;
 
@@ -11,11 +13,13 @@ public class OutboxRepository : IOutboxRepository
 {
     private readonly NpgsqlConnection _connection;
     private readonly ILogger<OutboxRepository> _logger;
+    private readonly IMetricsContainer _metrics;
 
-    public OutboxRepository(NpgsqlConnection connection, ILogger<OutboxRepository> logger)
+    public OutboxRepository(NpgsqlConnection connection, ILogger<OutboxRepository> logger, IMetricsContainer metrics)
     {
         _connection = connection;
         _logger = logger;
+        _metrics = metrics;
     }
 
     public async Task InsertMessages(List<OutboxMessage> messages)
@@ -30,6 +34,9 @@ public class OutboxRepository : IOutboxRepository
 
     public async Task<List<OutboxMessage>> GetMessagesWithLock(int batchSize)
     {
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
+        
         if (_connection.State is not ConnectionState.Open)
             await _connection.OpenAsync();
 
@@ -54,12 +61,19 @@ public class OutboxRepository : IOutboxRepository
         await _connection.ExecuteAsync(updateQuery, new { idents = result.Select(x => x.Id).ToArray() });
 
         await transaction.CommitAsync();
+        
+        stopwatch.Stop();
+        var pgTime = stopwatch.ElapsedMilliseconds;
+        _metrics.AddPgTime(pgTime, "fetch by state with lock");
 
         return result;
     }
 
     public async Task<OutboxMessage?> GetFirstMessage(int randomRange)
     {
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
+        
         var selectQuery = """
                           select *, xmin from outbox
                           where state = 0
@@ -92,6 +106,10 @@ public class OutboxRepository : IOutboxRepository
             _logger.LogInformation("Optimistic concurrency exception");
             return null;
         }
+        
+        stopwatch.Stop();
+        var pgTime = stopwatch.ElapsedMilliseconds;
+        _metrics.AddPgTime(pgTime, "fetch by state with optimistic lock");
 
         return message;
     }
@@ -139,8 +157,15 @@ public class OutboxRepository : IOutboxRepository
                     order by id
                     limit @batchSize;
                     """;
+        
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
 
         var result = await _connection.QueryAsync<OutboxMessage>(query, new { topic = topic, batchSize = batchSize });
+        
+        stopwatch.Stop();
+        var pgTime = stopwatch.ElapsedMilliseconds;
+        _metrics.AddPgTime(pgTime, "fetch by topic");
 
         return result.ToList();
     }
@@ -151,8 +176,15 @@ public class OutboxRepository : IOutboxRepository
                     delete from outbox
                     where state = 1 and id = ANY (@idents);
                     """;
-
+        
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
+        
         var result = await _connection.ExecuteAsync(query, new { idents = idents });
+        
+        stopwatch.Stop();
+        var pgTime = stopwatch.ElapsedMilliseconds;
+        _metrics.AddPgTime(pgTime, "delete by id and state");
 
         return result;
     }
@@ -163,8 +195,15 @@ public class OutboxRepository : IOutboxRepository
                     delete from outbox
                     where topic = @topic and id = ANY (@idents);
                     """;
+        
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
 
         var result = await _connection.ExecuteAsync(query, new { topic = topic, idents = idents });
+        
+        stopwatch.Stop();
+        var pgTime = stopwatch.ElapsedMilliseconds;
+        _metrics.AddPgTime(pgTime, "delete by id and topic");
 
         return result;
     }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Outbox.Core.Metrics;
 using Outbox.Core.Models;
@@ -29,19 +30,19 @@ public class LeasingLeasingOutboxProcessor : ILeasingOutboxProcessor
     public async Task<bool> SendMessages(WorkerTask config)
     {
         if (config.IsLeaseExpired())
+        {
+            _logger.LogInformation("lease ended for {Topic}", config.Topic);
             return false;
+        }
 
         var messages = await _outboxRepository.GetMessages(config.Topic, config.BatchSize);
-
+        
         if (messages.Count is 0)
             return false;
 
         foreach (var outboxMessage in messages)
         {
-            // await _outboxRepository.InsertProduced([outboxMessage]);
-            // await Task.Delay(1);
             await _sender.Send(outboxMessage);
-            _metrics.AddProduced();
         }
 
         await _outboxRepository.DeleteMessagesByIdAndTopic(messages.Select(x => x.Id).ToList(), config.Topic);

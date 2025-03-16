@@ -35,10 +35,7 @@ public class PessimisticOutboxProcessor : IPessimisticOutboxProcessor
 
         foreach (var outboxMessage in messages)
         {
-            // await _outboxRepository.InsertProduced([outboxMessage]);
-            // await Task.Delay(1);
             await _sender.Send(outboxMessage);
-            _metrics.AddProduced();
         }
 
         await _outboxRepository.DeleteMessagesByIdAndState(messages.Select(x => x.Id).ToList());

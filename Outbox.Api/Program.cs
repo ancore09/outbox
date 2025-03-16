@@ -26,14 +26,14 @@ builder.Host.UseSerilog((context, configuration) =>
     configuration
         .ReadFrom.Configuration(builder.Configuration)
         .Enrich.FromLogContext()
-        .WriteTo.Graylog(new GraylogSinkOptions
-        {
-            HostnameOrAddress = graylogOptions!.Host,
-            Port = graylogOptions.Port,
-            TransportType = Serilog.Sinks.Graylog.Core.Transport.TransportType.Udp,
-            // MinimumLogEventLevel = LogEventLevel.Information,
-            Facility = "Outbox"
-        })
+        // .WriteTo.Graylog(new GraylogSinkOptions
+        // {
+        //     HostnameOrAddress = graylogOptions!.Host,
+        //     Port = graylogOptions.Port,
+        //     TransportType = Serilog.Sinks.Graylog.Core.Transport.TransportType.Udp,
+        //     // MinimumLogEventLevel = LogEventLevel.Information,
+        //     Facility = "Outbox"
+        // })
         .WriteTo.Console();
 });
 

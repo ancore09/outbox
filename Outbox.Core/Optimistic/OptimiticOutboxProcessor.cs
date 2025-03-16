@@ -44,7 +44,6 @@ public class OptimiticOutboxProcessor : IOptimiticOutboxProcessor
         }
 
         await _sender.Send(outboxMessage);
-        _metrics.AddProduced();
 
         await _outboxRepository.DeleteMessagesByIdAndState([outboxMessage.Id]);
 
